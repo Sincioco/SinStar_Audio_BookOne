@@ -193,6 +193,8 @@ try {
   const response=await fetch('./book.json');if(!response.ok)throw new Error('Book data unavailable');book=await response.json();
   let index=0,time=0;
   try{const saved=JSON.parse(localStorage.getItem(saveKey())||'null');if(saved?.version===book.version){const found=book.chapters.findIndex(c=>c.id===saved.chapter);if(found>=0&&Number.isFinite(saved.time)){index=found;time=Math.max(0,saved.time);}}}catch{storageWarning=true;}
+  const bookmark=book.chapters.findIndex(chapter=>'#'+chapter.id===location.hash);
+  if(bookmark>=0&&bookmark!==index){index=bookmark;time=0;}
   // Configure cache identity before playback lookup; optional setup runs independently.
   initOffline(book,offlineStatus).then(()=>{offlineReady=true;downloadControls(false);}).catch(error=>{$('storage-status').textContent=error.message;offlineReady=false;downloadControls(false);});
   await selectChapter(index,{time,play:true});
