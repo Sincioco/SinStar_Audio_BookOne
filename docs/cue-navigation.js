@@ -13,14 +13,17 @@ export function initCueNavigation({root, resolve, activate, unavailable}) {
     activate(cue);
   }
   root.addEventListener('pointerdown', event => {
-    pointer = {id:event.pointerId, x:event.clientX, y:event.clientY, moved:false};
+    pointer = {id:event.pointerId, x:event.clientX, y:event.clientY, moved:false,
+      touch:event.pointerType==='touch', started:performance.now(), selecting:!window.getSelection()?.isCollapsed};
   }, {passive:true});
   root.addEventListener('pointermove', event => {
     if (pointer?.id === event.pointerId && Math.hypot(event.clientX-pointer.x,event.clientY-pointer.y)>6) pointer.moved = true;
   }, {passive:true});
   root.addEventListener('pointercancel', () => { if(pointer)pointer.moved=true; }, {passive:true});
+  root.addEventListener('contextmenu', () => { if(pointer)pointer.selecting=true; });
+  document.addEventListener('selectionchange',()=>{if(pointer&&!window.getSelection()?.isCollapsed)pointer.selecting=true;});
   root.addEventListener('click', event => {
-    const moved = pointer?.moved; pointer = null;
+    const moved = pointer?.moved || pointer?.selecting || (pointer?.touch && performance.now()-pointer.started>450); pointer = null;
     if (event.defaultPrevented || event.button !== 0 || event.detail > 1 || moved || !window.getSelection()?.isCollapsed) return;
     const node = target(event.target);
     if (!node) return;

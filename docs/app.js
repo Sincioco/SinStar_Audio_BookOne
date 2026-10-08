@@ -2,9 +2,20 @@ import {initOffline, audioURL, localSource, downloadAudio, cancelDownload, remov
 
 import {initCueNavigation} from './cue-navigation.js';
 import {initNarrationFollow} from './follow-narration.js';
+import {initMusic} from './music.js';
+import {initBookmarks} from './bookmarks.js';
+import {resolveRange} from './bookmark-anchors.js';
 
 const $ = id => document.getElementById(id);
 const audio = $('audio');
+const music = initMusic({audio});
+let bookmarks;
+// Unlock Web Audio synchronously on playback gestures, including keyboard cues.
+const musicGesture = event => {
+  if(event.isTrusted && event.target.closest('#play,#previous,#next,[data-chapter],[data-home],a[href^="#ch-"],[data-cue-id],#bookmark-list button')) music.gesture();
+};
+document.addEventListener('click',musicGesture,{capture:true});
+document.addEventListener('keydown', event => {if(event.key==='Enter'||event.key===' ')musicGesture(event);},{capture:true});
 const sections = [...document.querySelectorAll('.reading-section')];
 const links = [...document.querySelectorAll('[data-chapter]')];
 let book, current = 0, epoch = 0, objectURL = null, loading = false, pendingTime = null, pendingPlay = false;
@@ -100,6 +111,7 @@ async function selectChapter(index,{time=0,play=true,scroll=true}={}) {
   audio.pause(); audio.removeAttribute('src'); audio.load();
   if (objectURL) URL.revokeObjectURL(objectURL); objectURL = null;
   clearHighlight(); validCues = []; cueNavigation.refresh([]); current = index;
+  bookmarks?.chapterChanged();
   const chapter = book.chapters[index]; pendingTime = Math.max(0,Number(time)||0);
   sections.forEach((section,i)=>{section.hidden=i!==index;});
   links.forEach((link,i)=>{if(i===index)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
@@ -112,7 +124,9 @@ async function selectChapter(index,{time=0,play=true,scroll=true}={}) {
   history.replaceState(null,'','#'+chapter.id);
   if (scroll) window.scrollTo({top:0,behavior:'instant'});
   void validateCues(index);
-  const cached = await localSource(chapter);
+  // Keep play() in the trusted gesture stack on WebKit. The service worker
+  // serves verified saved audio (including ranges) at this same URL offline.
+  const cached = navigator.userActivation?.isActive ? null : await localSource(chapter);
   if (token !== epoch) { if(cached)URL.revokeObjectURL(cached); return; }
   objectURL = cached;
   audio.addEventListener('loadedmetadata',()=>{
@@ -125,6 +139,7 @@ async function selectChapter(index,{time=0,play=true,scroll=true}={}) {
   },{once:true,signal:metadataController.signal});
   audio.src=cached||audioURL(chapter);audio.load();
   if(pendingPlay)void startPlayback(token);
+  return token;
 }
 function updateClock() {
   $('elapsed').textContent=formatTime(audio.currentTime);$('seek').value=String(audio.currentTime);
@@ -156,7 +171,7 @@ function showDownloads(show){$('downloads').hidden=!show;$('downloads-toggle').s
 $('downloads-toggle').addEventListener('click',()=>showDownloads($('downloads').hidden));
 $('downloads-close').addEventListener('click',()=>{showDownloads(false);$('downloads-toggle').focus();});
 document.addEventListener('keydown',event=>{
-  if(event.key==='Escape'){closeContents();showDownloads(false);}
+  if(event.key==='Escape'){closeContents();showDownloads(false);bookmarks?.close();}
 });
 let fontScale=1;
 function fontSize(delta){fontScale=Math.max(.85,Math.min(1.4,fontScale+delta));document.documentElement.style.setProperty('--text-size',(1.15*fontScale)+'rem');followActive();}
@@ -191,6 +206,17 @@ $('remove-all').addEventListener('click',()=>void remove(book.chapters.map((_,i)
 
 try {
   const response=await fetch('./book.json');if(!response.ok)throw new Error('Book data unavailable');book=await response.json();
+  bookmarks=initBookmarks({book,sections,current:()=>current,cues:()=>validCues,async navigate(item){
+    const index=book.chapters.findIndex(c=>c.id===item.chapterId);
+    if(index<0){status('This bookmarked chapter is no longer in this edition.');return {section:sections[current],message:'This bookmarked chapter is no longer in this edition.',playing:false};}
+    const section=sections[index], range=resolveRange(item,section);
+    const candidate=book.chapters[index].cues.find(c=>c.id===item.cueId&&c.textHash===item.cueHash);
+    const nodes=candidate?[...section.querySelectorAll('[data-cue-id]')].filter(n=>n.dataset.cueId===candidate.id):[];
+    const cue=range && candidate && nodes.length && normalize(nodes.map(n=>n.textContent).join(' '))===candidate.text ? candidate:null;
+    const task=selectChapter(index,{time:cue?.start||0,play:Boolean(cue),scroll:false});
+    const expected=epoch;await task;if(epoch!==expected)return null;
+    return {section,playing:Boolean(cue),message:cue?'':range?'No matching narration cue. Text opened without starting audio.':'The saved quote changed or moved. Audio was not started.'};
+  }});
   let index=0,time=0;
   try{const saved=JSON.parse(localStorage.getItem(saveKey())||'null');if(saved?.version===book.version){const found=book.chapters.findIndex(c=>c.id===saved.chapter);if(found>=0&&Number.isFinite(saved.time)){index=found;time=Math.max(0,saved.time);}}}catch{storageWarning=true;}
   const bookmark=book.chapters.findIndex(chapter=>'#'+chapter.id===location.hash);

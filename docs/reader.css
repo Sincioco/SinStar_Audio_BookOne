@@ -18,3 +18,29 @@ main{margin:74px 0 200px 285px;padding:4.5rem max(5vw,2rem) 4rem;min-height:75vh
 .prose .novel-illustration{break-inside:avoid}.prose .novel-illustration img{display:block;margin:0 auto}
 
 .header-actions{display:flex;align-items:center;gap:.5rem;flex-shrink:0}.topbar .header-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:1px solid var(--line);border-radius:8px;color:var(--green);background:transparent;text-decoration:none}.topbar .header-icon:hover{background:#eae5d9}.header-icon svg{width:22px;height:22px;pointer-events:none}
+.header-left{display:flex;align-items:center;gap:.5rem}.topbar #contents-toggle{display:block;min-width:44px;min-height:44px}.bookmark-panel{left:1rem;right:auto}.bookmark-panel h3{font-size:.9rem}.bookmark-panel textarea{display:block;width:100%;font:inherit;line-height:1.5;resize:vertical;min-height:80px;border:1px solid var(--line);border-radius:6px;padding:.6rem;margin:.4rem 0}.bookmark-panel blockquote{margin:.6rem 0;padding:.6rem .8rem;border-left:3px solid var(--gold);background:var(--paper);font:1rem/1.6 Georgia,serif;white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto}.bookmark-panel label{display:block}.bookmark-panel textarea:focus-visible{outline:3px solid #b88726;outline-offset:2px}#bookmark-list{list-style:none;padding:0}#bookmark-list li{padding:1rem 0;border-top:1px solid var(--line)}.bookmark-chapter{font-size:.75rem;font-weight:600;margin:0}.bookmark-note{white-space:pre-wrap;overflow-wrap:anywhere}.bookmark-actions{display:flex;gap:.5rem;flex-wrap:wrap}.bookmark-actions button{font-size:.75rem}.bookmarked{outline:2px solid #4c8296;outline-offset:4px}::highlight(bookmark){background-color:#cce8ef;color:#173c36}::selection{background:#b9dbf2;color:#132c36}
+@media(min-width:901px){#contents:not(.open){display:none}main{margin-left:0}#contents.open{display:block;z-index:12;background:var(--paper);box-shadow:15px 0 35px #142b2b22}}
+@media(max-width:700px){.topbar{gap:.5rem;padding:0 .6rem}.header-left,.header-actions{gap:.3rem}.brand{font-size:.88rem}.brand span{display:none}}
+
+/* Overlay controls occupy no grid row; preserve the original 178/199px player. */
+.reading-options{padding-right:52px}
+#connection-status{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.music-toggle{position:absolute;right:2rem;bottom:.4rem;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;color:var(--green)}
+.music-toggle{border:0;background:transparent}
+.music-toggle::before{content:"";position:absolute;width:34px;height:28px;border:1px solid var(--line);border-radius:8px;box-sizing:border-box;pointer-events:none}
+.music-toggle svg{position:relative;width:14px;height:14px;pointer-events:none}
+.music-toggle:hover{background:transparent}.music-toggle:hover::before{background:#eae5d9}
+.music-toggle:focus-visible{outline:none}.music-toggle:focus-visible::before{outline:3px solid #b88726;outline-offset:3px}
+.music-panel{position:fixed;inset:auto 1rem 190px auto;margin:0;width:360px;max-width:calc(100vw - 2rem);max-height:calc(100dvh - 210px);overflow:auto;padding:1.25rem;background:#fffdf8;color:var(--ink);border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 60px #142b2b30;font-size:.88rem;line-height:1.6}
+.music-panel::backdrop{background:#142b2b22}
+.music-panel .panel-heading h2{font-size:1.5rem}
+.music-panel .panel-heading button{min-width:44px;min-height:44px}
+.music-row{display:flex;align-items:center;gap:.65rem;margin:.7rem 0}
+.music-row input{flex:1;min-width:0;min-height:44px;accent-color:var(--green)}
+#music-level{min-width:2.5em;text-align:right}
+.music-actions{display:flex;gap:.5rem;flex-wrap:wrap}
+.music-actions button{min-height:44px}
+#music-status{color:var(--muted);font-size:.78rem;overflow-wrap:anywhere;margin-bottom:0}
+@media(max-width:900px){.music-toggle{right:1rem}}
+@media(max-width:520px){.music-panel{bottom:211px;max-height:calc(100dvh - 231px)}}
+@media(max-height:600px){.music-panel{bottom:1rem;max-height:calc(100dvh - 2rem)}}

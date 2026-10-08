@@ -1,0 +1,25 @@
+{
+  "tracks": [
+    {
+      "file": "music/starforge-horizon.mp3",
+      "title": "Starforge Horizon (Title Screen)",
+      "bytes": 3774859,
+      "sha256": "d9c7022ca93fe0ed57638c794c01b9c804e842a7297c6752703762de093a81c1",
+      "duration": 157.9735
+    },
+    {
+      "file": "music/starforge-march.mp3",
+      "title": "Starforge March (Orin)",
+      "bytes": 4387551,
+      "sha256": "5838a5fccf0c154948abedbe7466453ccb47b41080e393997a37c196691443e1",
+      "duration": 182.8135
+    },
+    {
+      "file": "music/bloom.mp3",
+      "title": "Bloom (Arin)",
+      "bytes": 3384930,
+      "sha256": "bb396e0c7d3c3428a7154613cf9b541c9aceff35478691780b8b8df6e1af26ea",
+      "duration": 142.2135
+    }
+  ]
+}
