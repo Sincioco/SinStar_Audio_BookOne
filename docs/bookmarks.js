@@ -1,9 +1,9 @@
-import {captureSelection, resolveRange, cleanBookmarks} from './bookmark-anchors.js';
+import {captureSelection, captureSpokenCue, resolveRange, cleanBookmarks} from './bookmark-anchors.js';
 
-export function initBookmarks({book, sections, current, cues, navigate, get=document.getElementById.bind(document)}) {
-  const key='sin-star-book-one-bookmarks-v1';
+export function initBookmarks({book, sections, current, cues, spokenCue=()=>null, navigate, get=document.getElementById.bind(document)}) {
+  const key='sin-star-book-one-bookmarks-v2';
   const panel=get('bookmarks'), list=get('bookmark-list'), toggle=get('bookmarks-toggle');
-  let items=[], draft=null, memoryOnly=false, corrupt=false, highlighted=[];
+  let items=[], draft=null, memoryOnly=false, corrupt=false, highlighted=[], activationCaptured=false;
   function message(text){get('bookmark-status').textContent=text;}
   try {
     const raw=localStorage.getItem(key);
@@ -36,17 +36,26 @@ export function initBookmarks({book, sections, current, cues, navigate, get=docu
   }
   function renderDraft() {
     get('bookmark-composer').open=Boolean(draft);
-    get('bookmark-quote').textContent=draft?.quote||'Select text in the chapter, then open Bookmarks.';
+    get('bookmark-quote').textContent=draft?.quote||'No passage is highlighted now. Play narration or select text, then open Bookmarks.';
     get('bookmark-save').disabled=!draft;
     get('bookmark-match').textContent=draft?(draft.cueId?'Playback will begin at the first matched passage.':'No matching narration cue. This bookmark will open the text without starting audio.'):'';
   }
   function capture() {
+    if(!panel.hidden||activationCaptured)return;
     const candidate=captureSelection(window.getSelection(),sections[current()],book.chapters[current()],cues());
     if(candidate){draft=candidate;renderDraft();}
   }
+  function captureActivation() {
+    if(!panel.hidden)return;
+    const section=sections[current()], chapter=book.chapters[current()];
+    draft=captureSelection(window.getSelection(),section,chapter,cues()) || captureSpokenCue(spokenCue(),section,chapter);
+    activationCaptured=true;renderDraft();
+  }
   document.addEventListener('selectionchange',capture);
-  toggle.addEventListener('pointerdown',capture);
-  toggle.addEventListener('click',()=>{capture();show(panel.hidden);});
+  toggle.addEventListener('pointerdown',captureActivation);
+  toggle.addEventListener('pointercancel',()=>{activationCaptured=false;});
+  toggle.addEventListener('keydown',event=>{if(!event.repeat&&(event.key==='Enter'||event.key===' '))captureActivation();});
+  toggle.addEventListener('click',()=>{if(panel.hidden&&!activationCaptured)captureActivation();activationCaptured=false;show(panel.hidden);});
   get('bookmark-close').addEventListener('click',()=>{show(false);toggle.focus();});
   panel.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();show(false);toggle.focus();}});
   function button(text,action) {const b=document.createElement('button');b.type='button';b.textContent=text;b.addEventListener('click',action);return b;}
@@ -93,5 +102,5 @@ export function initBookmarks({book, sections, current, cues, navigate, get=docu
   });
   render();renderDraft();
   message(memoryOnly?'Bookmark storage is unavailable. Changes are kept for this visit only.':'Bookmarks and notes stay in this browser on this device.');
-  return {chapterChanged(){draft=null;renderDraft();clearHighlight();}, close(){show(false);}};
+  return {chapterChanged(){draft=null;activationCaptured=false;renderDraft();clearHighlight();}, close(){show(false);}};
 }

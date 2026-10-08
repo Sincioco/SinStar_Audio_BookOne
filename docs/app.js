@@ -206,7 +206,9 @@ $('remove-all').addEventListener('click',()=>void remove(book.chapters.map((_,i)
 
 try {
   const response=await fetch('./book.json');if(!response.ok)throw new Error('Book data unavailable');book=await response.json();
-  bookmarks=initBookmarks({book,sections,current:()=>current,cues:()=>validCues,async navigate(item){
+  bookmarks=initBookmarks({book,sections,current:()=>current,cues:()=>validCues,
+    spokenCue:()=>!loading&&!audio.paused&&!audio.seeking&&!audio.ended ? validCues.find(c=>c.id===activeCue&&audio.currentTime>=c.start&&audio.currentTime<c.end) : null,
+    async navigate(item){
     const index=book.chapters.findIndex(c=>c.id===item.chapterId);
     if(index<0){status('This bookmarked chapter is no longer in this edition.');return {section:sections[current],message:'This bookmarked chapter is no longer in this edition.',playing:false};}
     const section=sections[index], range=resolveRange(item,section);

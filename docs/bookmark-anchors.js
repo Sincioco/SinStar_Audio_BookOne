@@ -50,3 +50,15 @@ export function resolveRange(bookmark,section) {
 export function resolveBookmarkCue(bookmark,cues) {
   return cues.find(c=>c.valid && c.id===bookmark.cueId && c.textHash===bookmark.cueHash) || null;
 }
+
+// Freeze the actual highlighted cue; never recover a cleared or stale highlight.
+export function captureSpokenCue(cue,section,chapter) {
+  if(!cue?.valid || !cue.nodes?.length || !section)return null;
+  const nodes=cue.nodes;
+  if(!nodes.every(n=>n.isConnected && section.contains(n) && n.classList.contains('spoken')))return null;
+  const normalize=text=>(text.match(/[\p{L}\p{N}_]+/gu)||[]).join(' ');
+  if(normalize(nodes.map(n=>n.textContent).join(' '))!==cue.text)return null;
+  const range=document.createRange();range.selectNodeContents(nodes[0]);
+  const last=nodes[nodes.length-1];range.setEnd(last,last.childNodes.length);
+  return captureSelection({rangeCount:1,isCollapsed:false,getRangeAt:()=>range},section,chapter,[cue]);
+}
