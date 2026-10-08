@@ -4,7 +4,7 @@ import {musicBytes, musicSaved, downloadMusic, removeMusic} from './music-cache.
 // Only current + next track are retained. The narration element remains untouched.
 export function initMusic({audio, get=document.getElementById.bind(document), Context=window.AudioContext || window.webkitAudioContext, load=musicBytes}) {
   let context, gain, source, started=0, offset=0, index=0, sequence=0, audible=false;
-  let tracks=[], volume=.03, muted=false, downloading, failure=false, busy=false;
+  let tracks=[], volume=.05, muted=false, downloading, failure=false, busy=false;
   const buffers=new Map();
   const label=get('music-status'), slider=get('music-volume'), toggle=get('music-mute');
   const panel=get('music-panel'), opener=get('music-toggle');
@@ -26,7 +26,7 @@ export function initMusic({audio, get=document.getElementById.bind(document), Co
     enable.disabled=Boolean(enabled);
     enable.textContent=enabled?(source?'Music playing':busy?'Loading music…':'Music enabled'):(failure?'Retry music':'Enable music');
     if(muted)say('Music is muted. Unmute or Enable music to hear it with narration.');
-    else if(volume===0)say('Music volume is 0%. Raise it or Enable music to restore 3%.');
+    else if(volume===0)say('Music volume is 0%. Raise it or Enable music to restore 5%.');
     else if(enabled&&!audible)say('Music enabled — press Play in the audiobook player.');
   }
   try { const saved=JSON.parse(localStorage.getItem('sin-star-music-settings-v2'));
@@ -101,10 +101,10 @@ export function initMusic({audio, get=document.getElementById.bind(document), Co
   audio.addEventListener('playing',()=>{audible=true;void play();});
   for(const name of ['pause','ended','waiting','emptied','error'])audio.addEventListener(name,pause);
   window.addEventListener('pagehide',pause);
-  slider.addEventListener('input',()=>{gesture();const value=Number(slider.value)/100;volume=Number.isFinite(value)?Math.max(0,Math.min(.10,value)):.03;paint();if(volume===0)stop();else void play();});
+  slider.addEventListener('input',()=>{gesture();const value=Number(slider.value)/100;volume=Number.isFinite(value)?Math.max(0,Math.min(.10,value)):.05;paint();if(volume===0)stop();else void play();});
   toggle.addEventListener('click',()=>{gesture();muted=!muted;paint();if(muted)stop();else void play();});
   enable.addEventListener('click',()=>{
-    muted=false;if(volume===0)volume=.03;failure=false;paint();
+    muted=false;if(volume===0)volume=.05;failure=false;paint();
     say('Enabling music…');gesture();
   });
   async function savedStatus() {
